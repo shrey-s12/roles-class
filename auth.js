@@ -3,7 +3,7 @@ dorenv.config();
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { USERS } = require('./db');
+const { findUserByName } = require('./db');
 const app = express();
 const PORT = process.env.PORT2; // 5001
 const SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -28,8 +28,7 @@ app.post("/token", (req, res) => {
 
 app.post("/login", async (req, res) => {
     try {
-        const { username } = req.body;
-        const user = USERS.find(ele => ele.username === username);
+        const user = findUserByName(req.body.username);
         if (!user) {
             return res.status(400).json({ message: "User not Found" });
         }
@@ -57,7 +56,7 @@ app.delete("/logout", (req, res) => {
 });
 
 function generateAccessToken(token_data) {
-    return jwt.sign(token_data, SECRET, { expiresIn: "30s" });
+    return jwt.sign(token_data, SECRET, { expiresIn: "30m" });
 }
 
 app.listen(PORT, () => {
