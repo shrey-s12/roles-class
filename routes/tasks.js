@@ -1,13 +1,14 @@
-const { TASKS, fillTaskDetails } = require('../db.js');
+const {fillTaskDetails, TASKS } = require('../db.js');
 const { populateTask } = require('../middleware/data.js');
+const { paginate } = require('../middleware/pagination.js');
 const { canViewTask, canDeleteTask } = require('../permission.js');
 const router = require('express').Router();
 
-router.get('/', (req, res) => {
-    const detailedTasks = TASKS
-        .filter(task => canViewTask(task, req.user))
-        .map(task => fillTaskDetails(task));
-    res.json(detailedTasks);
+router.get('/',filterUsers, paginate, (req, res) => {
+    // const detailedTasks = res.paginatedResults.results
+    //     .filter(task => canViewTask(task, req.user))
+    //     .map(task => fillTaskDetails(task));
+    res.json(res.paginatedResults);
 });
 
 router.get('/:id', populateTask, authViewTask, (req, res) => {
@@ -30,6 +31,11 @@ function authDeleteTask(req, res, next) {
     if (!canDeleteTask(req.task, req.user)) {
         return res.status(401).json({ message: "Not allowed" });
     }
+    next();
+}
+
+function filterUsers(req, res, next) {
+    req.paginationResource = TASKS;
     next();
 }
 

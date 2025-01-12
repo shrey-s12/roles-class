@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const { ROLES } = require('../db');
 const SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 function authenticateToken(req, res, next) {

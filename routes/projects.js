@@ -1,22 +1,27 @@
 const { PROJECTS, TASKS, findTasksByProject, findManager, fillProjectDetails } = require('../db.js');
 const { populateProject } = require('../middleware/data.js');
+const { paginate } = require('../middleware/pagination.js');
 const { canViewProject, canEditProject, canCreateProject } = require('../permission.js');
 const router = require('express').Router();
 
-
-router.get('/', (req, res) => {
-    const detailedProjects = PROJECTS.filter(project => canViewProject(project, req.user))
-        .map(project => {
-            const taskCount = findTasksByProject(project.id).length;
-            const manager = findManager(project.managerId);
-            return {
-                ...project,
-                taskCount,
-                managerName: manager ? manager.username : null,
-            };
-        });
+router.get('/', filterProjects, paginate, (req, res) => {
+    const detailedProjects = res.paginatedResults.results.map(project => {
+        const taskCount = findTasksByProject(project.id).length;
+        const manager = findManager(project.managerId);
+        return {
+            ...project,
+            taskCount,
+            managerName: manager ? manager.username : null,
+        };
+    });
+    res.paginatedResults.results = detailedProjects;
     res.json(detailedProjects);
 });
+
+function filterProjects(req, res, next) {
+    req.paginationResource = PROJECTS.filter(project => canViewProject(project, req.user));
+    next();
+}
 
 router.get('/:id', populateProject, authViewProject, (req, res) => {
     res.json(fillProjectDetails(req.project));

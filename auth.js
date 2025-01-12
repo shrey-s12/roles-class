@@ -56,7 +56,7 @@ app.delete("/logout", (req, res) => {
 });
 
 function generateAccessToken(token_data) {
-    return jwt.sign(token_data, SECRET, { expiresIn: "30m" });
+    return jwt.sign(token_data, SECRET, { expiresIn: "3h" });
 }
 
 app.listen(PORT, () => {
