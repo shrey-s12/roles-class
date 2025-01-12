@@ -1,10 +1,10 @@
-const {fillTaskDetails, TASKS } = require('../db.js');
+const { fillTaskDetails, TASKS } = require('../db.js');
 const { populateTask } = require('../middleware/data.js');
 const { paginate } = require('../middleware/pagination.js');
 const { canViewTask, canDeleteTask } = require('../permission.js');
 const router = require('express').Router();
 
-router.get('/',filterUsers, paginate, (req, res) => {
+router.get('/', filterTasks, paginate, (req, res) => {
     // const detailedTasks = res.paginatedResults.results
     //     .filter(task => canViewTask(task, req.user))
     //     .map(task => fillTaskDetails(task));
@@ -34,8 +34,14 @@ function authDeleteTask(req, res, next) {
     next();
 }
 
-function filterUsers(req, res, next) {
-    req.paginationResource = TASKS;
+function filterTasks(req, res, next) {
+    const { users } = req.query;
+    let filteredTasks = TASKS;
+    if (users) {
+        const userIds = users.split(',').map(id => parseInt(id));
+        filteredTasks = filteredTasks.filter(task => userIds.includes(task.userId));
+    }
+    req.paginationResource = filteredTasks;
     next();
 }
 

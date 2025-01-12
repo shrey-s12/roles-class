@@ -5,7 +5,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { findUserByName } = require('./db');
 const app = express();
-const PORT = process.env.PORT2; // 5001
+const PORT = process.env.PORT2; // 6001
 const SECRET = process.env.ACCESS_TOKEN_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET;
 app.use(express.json());

@@ -5,7 +5,19 @@ const { canViewProject, canEditProject, canCreateProject } = require('../permiss
 const router = require('express').Router();
 
 router.get('/', filterProjects, paginate, (req, res) => {
-    const detailedProjects = res.paginatedResults.results.map(project => {
+    res.json(res.paginatedResults);
+});
+
+function filterProjects(req, res, next) {
+    const { managers, sort } = req.query;
+    let filteredProject = PROJECTS.filter(project => canViewProject(project, req.user));
+
+    if (managers) {
+        const managerIds = managers.split(',').map(id => parseInt(id));
+        filteredProject = filteredProject.filter(project => managerIds.includes(project.managerId));
+    };
+
+    filteredProject = filteredProject.map(project => {
         const taskCount = findTasksByProject(project.id).length;
         const manager = findManager(project.managerId);
         return {
@@ -14,14 +26,27 @@ router.get('/', filterProjects, paginate, (req, res) => {
             managerName: manager ? manager.username : null,
         };
     });
-    res.paginatedResults.results = detailedProjects;
-    res.json(detailedProjects);
-});
 
-function filterProjects(req, res, next) {
-    req.paginationResource = PROJECTS.filter(project => canViewProject(project, req.user));
+    const sortPredicate = {
+        "taskCount": (a, b) => b.taskCount - a.taskCount,
+        // decreasing order by project name 
+        "name": (a, b) => b.name.localeCompare(a.name),
+    };
+
+    if (sort) {
+        const predicates = sort.split(',').map(key => sortPredicate[key]);
+        const combinedPredicate = predicates.reduceRight(
+            (acc, predicate) => {
+                return (a, b) => (predicate(a, b) || acc(a, b));
+            }, () => 0
+        );
+
+        filteredProject.sort(combinedPredicate);
+    }
+
+    req.paginationResource = filteredProject;
     next();
-}
+};
 
 router.get('/:id', populateProject, authViewProject, (req, res) => {
     res.json(fillProjectDetails(req.project));
